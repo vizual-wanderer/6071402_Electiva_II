@@ -32,7 +32,7 @@ load(url())
 
 #Investigacion de objetos, abordaje de Base R.
 
-Responda las siguientes preguntas sobre el objeto `df_school_all` ejecutando el comando apropiado y escribiendo cualquier respuesta sustantiva requerida por la pregunta. La primera pregunta será respondida para que usted muestre cómo funciona.
+Responda las siguientes preguntas sobre el objeto `df_school_all` ejecutando el comando apropiado y escribiendo cualquier respuesta sustantiva requerida por la pregunta. La primera pregunta será respondida para mostrar cómo funciona.
 
 EJEMPLOS:
 
