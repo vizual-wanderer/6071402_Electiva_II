@@ -9,3 +9,105 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+#Hacer los cambios en el YAML de R Markdown para hacer:
+
+enlace: https://bookdown.org/yihui/rmarkdown/pdf-document.html
+
+1. Tabla de contenido
+2. Colocar "depth" de 2 (profundidad)
+3. Agregar la numeracion para la seccion de los encabezados.
+4. Recodar de cambiar el output a pdf_document
+
+
+Cargar el paquete de Tidyverse.
+```{r}
+#ingresar codigo
+```
+
+Cargar la base de datos para este ejercicio del siguiente enlace:
+https://github.com/vizual-wanderer/6071402_Electiva_II/raw/master/Base_datos_electiva/Base_col_completa.RData
+```{r}
+load(url())
+```
+
+#Investigacion de objetos, abordaje de Base R.
+
+Responda las siguientes preguntas sobre el objeto `df_school_all` ejecutando el comando apropiado y escribiendo cualquier respuesta sustantiva requerida por la pregunta. La primera pregunta será respondida para que usted muestre cómo funciona.
+
+EJEMPLOS:
+
+Que "tipo" de objeto es `df_school_all`?
+```{r}
+#introduce el comando que utiliza para responder la pregunta
+typeof(df_school_all)
+```
+Respuesta: el objeto `df_school_all` es una lista
+
+Cual es el largo del objeto `df_school_all`? a que se refiere este dato con respecto a la base?
+```{r}
+#introduce el comando que utiliza para responder la pregunta
+length(df_school_all)
+```
+Respuesta: el largo del objeto `df_school_all` es 55, lo anterior se refiere al numero de variables.
+
+PREGUNTAS TALLER:
+
+Para la siguiente pregunta se ejecuto un comando R. Responder las siguientes preguntas:
+
+1.¿Que representa cada elemento del objeto `df_school_all`?
+Respuesta:
+
+2.¿Son los elementos individuales dentro de `df_school_all`, listas o vectores?
+Respuesta:
+
+3.¿Los elementos individuales dentro de `df_school_all` están nombrados o no tienen nombre? 
+¿A qué se refieren estos nombres de elementos?
+Respuesta:
+
+```{r}
+str(df_school_all)
+```
+
+Estas preguntas se refieren a la variable `school_type` dentro del objeto `df_school_all`. Para las dos primeras preguntas, ejecute el comando R apropiado y escriba cualquier respuesta sustantiva requerida por la pregunta.
+
+4. ¿Cuál es el tipo de datos de `school_type`?
+5. ¿Cuál es la "longitud" de `school_type`? ¿A qué se refiere este valor específico de longitud?
+
+En estas preguntas, aplicará la función `table()` a la variable `school_type` dentro del objeto `df_school_all`. 
+
+6. En tus propias palabras, ¿qué hace la función `table()`? 
+7. ¿Qué controla el argumento `useNA` de la función `table()`?
+8. ¿Cuál es el valor predeterminado del argumento `useNA` y qué significa este valor predeterminado?
+9. ¿Qué sucede cuando asigna el valor `"ifany"` al argumento useNA?
+10.¿Qué sucede cuando asigna el valor `"always"` al argumento useNA?
+
+# Abordaje Tidy: Filter, select, arrange
+
+El dataframe `df_school_all` tiene una observación para cada escuela secundaria (pública y privada).
+
+Las variables que comienzan con `visitas_por _...` identifican cuántas visitas recibió la escuela secundaria de una universidad pública en particular. Por ejemplo, UC Berkeley tiene el ID 110635, por lo que la variable `visits_by_110635` identifica cuántas visitas recibió la escuela secundaria de UC Berkeley.
+
+La variable `total_visits` identifica el número de visitas que recibió la escuela secundaria de todas las universidades de investigación pública.
+
++ Para todas las preguntas a continuación, puede responder usando una línea de código o puede responder en varios pasos.
++ Para las preguntas que le piden que imprima las observaciones del "top 10", puede simplemente imprimir el objeto y confiar en el hecho de que la opción predeterminada [para dataframes es "tibble"] imprime 10 observaciones O puede ajustar el comando en el La función `head()` y explícitamente le dice a R que imprima 10 observaciones.
++ Antes de realizar análisis, hay que cambiar el nombre de la variable `avgmedian_inc_2564` para darle un nombre más corto.
+
+11. Renombrar la variable `avgmedian_inc_2564` a `med_inc` y asignar la nueva variable al objeto pre-existente `df_school_all`.
+
+Compara las visitas realizadas por la universidad de Alabama a escuela secundaria dentro y fuera del estado (IPEDS ID = 100751) variable `visits_by_100751`. 
+
+12. Cuente la cantidad de escuelas secundarias públicas del estado que recibieron al menos una visita de la Universidad de Alabama.
+
+Recomendaciones: 
++ Necesitará usar la funcion `filter` y la funcion `count`.
++ Use comas para separar las variables para estas preguntas (por ejemplo, `filter(dataframe, variable == algo, variable == algo))`
++ Puede hacer esto en un solo paso envolviendo la función de `count` alrededor de la función de `filter`; o puede hacer esto en dos pasos creando primero un nuevo dataframe.
++ El codigo del estado Alabama es "AL".
+
+13.¿Cuántas escuelas secundarias públicas estatales (Dentro de Alabama) inscribieron al menos 50% de estudiantes latinos o 50% afroamericanos a la Universidad de Alabama?
+
+14. Cuente las escuelas secundarias públicas por fuera del estado (Alabama) que recibieron al menos una visita de la Universidad de Alabama sin usar comas.
+recomendacion: usar `&` o `%in%`.
+
+15.¿Cuántas escuelas secundarias públicas por fuera del estado (Alabama) inscribieron inscriben al menos 50% de estudiantes latinos o 50% afroamericanos la Universidad de Alabama? 
