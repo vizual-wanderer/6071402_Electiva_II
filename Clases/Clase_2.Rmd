@@ -2,10 +2,12 @@
 title: "Clase_2_ejercicios"
 author: "Joshua Kock"
 date: "2/1/2019"
-output: 
+output:
+  pdf_document:
+    toc: yes
   html_document:
-    toc: true
-    number_sections: true
+    number_sections: yes
+    toc: yes
 ---
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -51,7 +53,7 @@ Juntas, estas propiedades facilitan una cadena de varios pasos simples para logr
 `filter()` permite escoger observaciones basadas en sus valores. El primer argumento es el nombre del dataframe. El segundo y subsiguientes argumentos son las expresiones que filtran el marco de datos. 
 Por ejemplo, podemos seleccionar todos los vuelos los pacientes con hdl igual a 52 con:
 
-Puedes leer mas: ?dyplyr::filter()
+Puedes leer mas: ?dplyr::filter()
 
 ```{r}
 filter(diabetes, hdl == 52)
@@ -81,7 +83,7 @@ Los argumentos múltiples para `filter` se combinan con "and": cada expresión d
 filter(diabetes, chol >= 200 | hdl <= 30)
 ```
 
-Con la ejeccucion del codigo anterior vemos que tenemos 234pacientes con cholesterol igual o mayor a 200 OR HDL menos o igual a 30. Si queremos que ambos criterios se utilicen es necesario utilizar `&` para buscar los pacientes que tengan cholesterol de 200 o mas y hdl menor o igual a 30.
+Con la ejeccucion del codigo anterior vemos que tenemos 234 pacientes con cholesterol igual o mayor a 200 OR HDL menos o igual a 30. Si queremos que ambos criterios se utilicen es necesario utilizar `&` para buscar los pacientes que tengan cholesterol de 200 o mas y hdl menor o igual a 30.
 
 ```{r}
 filter(diabetes, chol >= 200 & hdl <= 30)
@@ -89,9 +91,21 @@ filter(diabetes, chol >= 200 & hdl <= 30)
 
 Ejercicio:
 
-1.Busca los pacientes masculinos con cholesterol igual a 250 y 300
+1.Busca los pacientes masculinos con cholesterol igual a 250 y 300.
+```{r}
+filter(diabetes, gender == "male" & chol == 250 & chol == 300)
+```
+
 2.Busca las mujeres mayor a 45 con HDL menor a 30.
+```{r}
+filter(diabetes, gender == "female",age > 45, hdl <= 30)
+```
+
 3.Cual es el promedio de edad de los pacientes con con la HbA1c mayor a 6.5.
+```{r}
+df_1 <- filter(diabetes, glyhb > 6.5)
+mean(df_1$age)
+```
 
 ## Organizar filas con `Arrange()`
 
@@ -116,7 +130,7 @@ Ver `?select()` para más detalles.
 
 ```{r}
 select(diabetes, chol,hdl,glyhb)
-select(diabetes, chol:age)
+select(  diabetes, chol:age)
 select(diabetes, -(chol:age))
 ```
 Hay una serie de funciones de ayuda que puede utilizar dentro de `select()`:
@@ -128,8 +142,20 @@ Hay una serie de funciones de ayuda que puede utilizar dentro de `select()`:
 
 Ejercicio:
 1. Que pasa cuando incluyes el nombre de una variable en multiples ocaciones en `select()`?
+```{r}
+select(diabetes, age, age)
+```
+
 2. Que hace la funcion `one_of()`? porque seria util en la conjungacion del siguiente vector?
 ```{r}
+?tidyselect::one_of()
 vars <- c("age","gender", "height", "chol", "hdl", "ratio")
+vars
+typeof(vars)
+#hay como vars es un vector de characteres no te va funcionar dentro de select
+select(diabetes, one_of(vars))
 ```
 3. Seleciona los ID de los pacientes que cumplen una tension normal (tanto sistolica, como diastolica), y tengan una HbA1C por encima de 7.
+```{r}
+select(filter(diabetes, bp.1s <= 120, bp.1d <= 80, glyhb > 7), id)
+```
