@@ -147,6 +147,7 @@ select(diabetes, age, age)
 ```
 
 2. Que hace la funcion `one_of()`? porque seria util en la conjungacion del siguiente vector?
+
 ```{r}
 ?tidyselect::one_of()
 vars <- c("age","gender", "height", "chol", "hdl", "ratio")
