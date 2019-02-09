@@ -1,8 +1,12 @@
 ---
-title: "Untitled"
+title: "Clase_3"
 author: "Joshua Kock"
 date: "2/7/2019"
-output: html_document
+output: 
+  pdf_document:
+    toc: true
+    number_sections: true
+    toc_depth: 2
 ---
 
 ```{r setup, include=FALSE}
@@ -17,7 +21,7 @@ http://biostat.mc.vanderbilt.edu/wiki/pub/Main/DataSets/ari.html#levels.clin
 
 
 ```{r}
-ari <- read.csv()
+ari <- read.csv("https://raw.githubusercontent.com/vizual-wanderer/6071402_Electiva_II/master/Base_datos_electiva/ari.csv")
 ```
 
 # Funciones con Operador %>% 
@@ -25,23 +29,36 @@ ari <- read.csv()
 Pasa un objeto y luego una funcion
 
 ```{r}
-str(ari) #Funcion y luego objeto
-ari %>% str() #objeto luego funcion
+#str(ari) #Funcion y luego objeto
+#ari %>% str() #objeto luego funcion
 ```
 
 Ejercicio
-Seleccionen la talla (lght) y peso de todos los bebes con un peso a nacer menor a 2500g (biwt), solo los primeros 10 resultados
+Seleccionen la talla (lgth) y peso de todos los bebes con un peso a nacer menor a 2500g (biwt), solo los primeros 10 resultados
 ```{r}
-
+ari %>% 
+  filter(biwt <= 2500) %>% 
+  select(lgth) %>% 
+  head(n = 10)
 ```
 
 Revisen la funcion count de dplyr y haga 2 operaciones con ella y explique en sus propias palabras.
+```{r}
+ari %>% 
+  count(weight)
+
+ari %>% 
+  filter(biwt <= 2500) %>% 
+  select(weight) %>% 
+  count()
+```
 
 Count muestra por defecto los datos perdidos?
 
 Crea un nuevo objeto ari_2 con las variables de ID, peso, leucocitos, linfocitos, circunferencia craneo, peso en gramos al nacer, talla al nacer, temperatura, oximetria, edad en dias, omfalitis y conjuntivitis.
 ```{r}
-
+ari2 <- ari %>% select(stno, weight, wbco,
+                      lpcc, hcir, biwt, lgth, temp, hrat, age, omph, conj)
 ```
 
 # Crear variables con funcion mutate()
@@ -52,13 +69,20 @@ Hacerlo de forma base R y con mutate()
 
 Miren como funciona mutate con el buscador de ayuda, miren las funciones de ayuda (Helper functions)
 ```{r}
+ari %>% 
+  mutate(biwt_2 = biwt/2) %>% #tidyverse
+  select(biwt_2) %>% 
+  head(n = 10) 
 
+ari$biwt_3 <- ari$biwt/2#base R
 ```
 
 Si no se asgina la nueva variable no se guarda en el dataframe.
 ```{r}
 ari %>% 
-  mutate(h_lgth = lgth/2)
+  mutate(h_lgth = lgth/2) %>% 
+  head(n = 10) %>% 
+  select(h_lgth)
 ```
 
 ```{r}
@@ -72,7 +96,9 @@ Se pueden crear mas de una variable a la vez
 ari %>%
   mutate(tasa_linf_bla = lpcc/wbco,
          tasa_peso_talla = wght/lgth,
-         pct_cir = hcir/100)
+         pct_cir = hcir/100) %>% 
+  select(tasa_linf_bla,tasa_peso_talla, pct_cir) %>% 
+  head(n = 10)
 ```
 
 # Helper functions en mutate
@@ -85,13 +111,28 @@ ari %>%
 Ifelse es una funcion que crea una variable indicadora 1/0 basada en una condicion
 ```{r}
 ari %>% 
-  mutate(bajo_peso = if_else(wght <2500,1,0))
+  mutate(bajo_peso = if_else(wght < 2500,1,0)) %>% 
+  select(bajo_peso) %>% 
+  head(n = 10)
 ```
 
 Ejericio
 con ifelse genere una variable indicadora para datos perdidos de recuento globulos blancos wbco y contar estos datos (usar funcion is.na)
+```{r}
+ari %>% 
+  mutate(perdido = if_else(!is.na(wbco), 1, 0)) %>% 
+  select(perdido) %>% 
+  head(n = 10)
+```
 
-genere una variable indicadora para la variable clin ifentificado los pacientes que se les tomo muestra (sample o yes) que sean de etiopia. Cuantos son?
+genere una variable indicadora para la variable clin identificado los pacientes que se les tomo muestra (sample o yes) que sean de etiopia. Cuantos son?
+```{r}
+ari %>% 
+  filter(country == "Ethiopia") %>% 
+  mutate(clin_pos = if_else(str_detect(clin, "Yes"),
+                                       1,0)) %>% 
+  count()
+```
 
 ## recode
 Recode como el nombre lo indica recodifica una variable que sea un factor en el caso de R.
@@ -104,7 +145,9 @@ missing: si especificado los valores perdidos se les asignara este valor.
 Estamos recodificando Y como 1 y N como 0 en la variable de enfermedad
 ```{r}
 ari %>% 
-  mutate(enfermedad = recode(sickc, "Y" = 1, "N" = 0))
+  mutate(enfermedad = recode(sickc, "Y" = 1, "N" = 0)) %>% 
+  select(sickc, enfermedad) %>% 
+  head(n = 10)
 ```
 
 Ejercicio:
@@ -120,7 +163,14 @@ P and M
 M and S
 P,M and S
 ```{r}
-
+ari %>% 
+  mutate(patron = recode(impcl,
+                 "P only" = "P",
+                 "S only" = "S",
+                 "M only" = "M",
+                 .default = "otro")
+         ) %>% 
+  count(patron)
 ```
 
 ##Case when
@@ -134,11 +184,28 @@ Quiero saber que bebes de etiopia tienen peso normal al nacer (2500 a 3800g) en 
 ari %>% 
   mutate(
     etiopia_peso = case_when(
-    country == "Ethiopia" & wght >= 250 & wght <= 3800 ~ "et_peso_norm"
+    country == "Ethiopia" & wght >= 2500 & wght <= 3800 ~ "et_peso_norm"
   )
-)
+) %>% 
+  select(etiopia_peso) %>% 
+  head(n = 10)
 ```
 
 ejercicio case when
-determinar los bebes de papa nueva guinea que tengan un peso mayor a 3000 y no se hicieron la prueba clinica o la negaron (clin).
+determinar los bebes de papua nueva guinea que tengan un peso mayor a 3000 y no se hicieron la prueba clinica o la negaron (clin).
+```{r}
+ari %>% 
+  mutate(variable = case_when(
+    country == "Papua New Guinea" & wght >3000 ~ "pap_peso")
+  ) %>% 
+  count(variable)
+```
+
 determinar los pacientes con conteo de blancos mayor a 10mil con una frecuencia respiratoria rr mayor a 60 con puncion lumbar positiva (lp.pos)
+```{r}
+ari %>% 
+  mutate(sepsis = case_when(
+    wbco > 10000 & rr >60 & lp.pos == 1 ~ "sepsis_snc"
+  )) %>% 
+  count(sepsis)
+```
