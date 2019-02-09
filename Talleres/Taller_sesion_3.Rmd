@@ -1,0 +1,132 @@
+---
+title: "Taller_sesion_3"
+author: "Joshua Kock"
+date: "2/6/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Cargar el paquete de Tidyverse.
+```{r}
+#Insertar codigo
+```
+
+Cargar la base de datos para este ejercicio del siguiente enlace:
+https://github.com/vizual-wanderer/6071402_Electiva_II/raw/master/Base_datos_electiva/Base_col_completa.RData
+```{r}
+load(url())
+```
+
+Correr este codigo para arreglar la base de datos:
+```{r}
+df_school_all <- df_school_all %>%
+select(-contains("inst_")) %>%
+rename(visits_by_berkeley = visits_by_110635,
+    visits_by_boulder = visits_by_126614,
+    visits_by_bama = visits_by_100751,
+    visits_by_stonybrook = visits_by_196097,
+    visits_by_rutgers = visits_by_186380,
+    visits_by_pitt = visits_by_215293,
+    visits_by_cinci = visits_by_201885,
+    visits_by_nebraska = visits_by_181464,
+    visits_by_georgia = visits_by_139959,
+    visits_by_scarolina = visits_by_218663,
+    visits_by_ncstate = visits_by_199193,
+    visits_by_irvine = visits_by_110653,
+    visits_by_kansas = visits_by_155317,
+    visits_by_arkansas = visits_by_106397,
+    visits_by_sillinois = visits_by_149222,
+    visits_by_umass = visits_by_166629,
+    num_took_read = num_took_rla,
+    num_prof_read = num_prof_rla,
+    med_inc = avgmedian_inc_2564
+  )
+```
+
+1. Explicar en tus propias palabras que hace la funcion `select(-contains)` y la funcion rename.
+
+2. imprimir los nuevos nombres de las variables en la base de datos `df_school_all`
+```{r}
+#insertar codigo
+```
+
+# Preguntas relacionadas con `filter` y `arrange`.
+
+Para las preguntas a continuación, identifique que escuelas secundarias reciben la mayor cantidad de visitas de reclutamiento fuera del campus de las 16 universidades publicas de la muestra. Por lo tanto, se centrara en la variable `total_visits`, que cuenta el numero total de visitas a la escuela secundaria en todas las 16 universidades publicas de investigacion de la muestra.
+
+Para las preguntas que le piden que imprima las observaciones del "top 10", puede:
+- simplemente imprima el objeto y confiar en el hecho de que la opcion predeterminada para imprimir tibbles es imprime las primeras 10 observaciones
+- O puede envolver el comando en la función `head()` e indicar explicitamente a `R` que imprima las top 10 observaciones.
+
+3. Sin usar pipes (`%>%`), ordene (es decir, la funcion de `arrange()`) por `total_visits` e imprima las siguientes variables para las 10 escuelas principales.
+
+variables a imprimir: `name`, `state_code`, `city`, `school_type`,`total_visits`, `med_inc`, `pct_white`, `pct_black`, `pct_hispanic`, `pct_asian`, `pct_amerindian`.
+
+4. Responda la pregunta 3, en este ejericio usaras el operador pipe `%>%`. Para esta pregunta solo puedes utilizar una linea de codigo.
+
+Sin utilizar el operador de pipe responda las siguientes dos preguntas:
+5.Las top 10 escuelas publicas con mayor numero de visitas
+6.Las top 10 escuelas privadas con mayor numero de visitas
+
+7. Responde las preguntas 5 y 6 con el operador `%>%` (Solo en una linea de codigo)
+
+8. Utilizando el operador `%>%` responde las siguientes preguntas
+a) top 10 escuelas publicas en massachussets con mayor numero de visitas totales
+b) top 10 escuelas privadas en massachussets con mayor numero de visitas totales
+c) top 10 escuelas publicas en california con mayor numero de visitas totales.
+d) top 10 escuelas privadas en california con mayor numero de visitas totales.
+
+# Creando variables con la funcion `mutate()`
+
+El enfoque de este parte del taller sera practicar la creacion de algunas variables a partir del dataframe `df_school_all`. Utilizando la funcion `mutate()`, en ocaciones combinada con la función `if_else()`. Ademas, las preguntas le pediran que investigue los valores de las variables de "entrada" antes de crear nuevas variables de "análisis" utilizando `mutate()`
+
+9. Cree una variable indicadora 0/1 usando `mutate()` con `ifelse()` llamada `ca_school` que indica si la escuela secundaria esta en California y luego usa `count()` para crear una tabla de frecuencia para los valores de `ca_school`
+(no es necesario asignar/conserve la nueva variable)
+
+10. Cree una variable indicadora 0/1 usando `mutate()` con `ifelse()` llamada `ca_pub_school` que indique si la escuela en el estado de california es publica o privada, luego usa `count()` para determinar la frecuencias.
+
+11. Cree una nueva variable `pct_bl_hisp_nat` que represente el porcentaje de estudiantes en la escuela que se identifican como indigenas (amerindian), afroamericano(black) o hispano (hispanic). Conserve esta variable asignandola al objeto `df_school_all`
+
+12. Cree una variable indicadora 0/1 llamada `gt50_pct_hbn`, para determinar las escuelas que tienen mayor del 50% de estudiantes correspondientes a indigenas, afroamericanos o hispanos. Usar `count()` para ver la frecuencia.
+
+13. En una sola linea de codigo, cree las siguientes variables de indicadoras 0/1, conservelas (asigne al objeto df_school_all), y luego cree conteos de frecuencia de estas variables:
+
+- Variable `miss_took_math` para saber si la escuela tiene valores faltantes para la variable `num_took_math`(numero de estudiantes que vieron la materia)
+- Variable `miss_prof_math` para saber si la escuela tiene valores faltantes para la variable `num_prof_math`(numero de estudiantes que aprobaron la materia)
+
+14.cree una variable de `pct_prof_math` que mide el porcentaje de estudiantes que aprueban matemáticas (asigne al objeto `df_school_all`).
+
+# Utilizar la funcion `case_when()`
+
+Para estas preguntas trabajaras con el dataframe `wwlist` que tiene una observación para cada posible estudiante adquirido por la Western Washington University del College Board.
+
+El objetivo es crear una variable de tres categorías que identifique si el prospecto vive: 
+- (1) En el estado (es decir, en Washington), 
+- (2) Fuera del estado pero en un estado de los EE. UU. territorio 
+- (3) No en los Estados Unidos
+
+15. Cargue el marco de datos wwlist: 
+https://github.com/vizual-wanderer/6071402_Electiva_II/raw/master/Base_datos_electiva/wwlist_merged.RData
+```{r}
+load(url())
+```
+
+Exploracion incial de base de datos
+
+16. Cuenta el numero de estados variable `state` (mostrar solo el top 10)
+
+17. Cuenta el numero de paises variable `for_country` (mostrar solo el top 10)
+
+18, Identifique el numero de datos peridod para las variables `state` y `for_country`
+
+19. Realizar un conteo de los paises `for_country` en donde la variable `state` sea igual a `NA` (recuerde usar `is.na()`)
+
+20. Contar el numero de observaciones en la variable `for_country` que contestaron "No Response".
+
+21. Utilizando la funcion `case_when()` dentro de `mutate()` crea una variable de caracteres "string" llamada `residencia` que contenga los siguientes niveles:
+`en_estado`, `fuera_estado` y `otro_pais`
+
+

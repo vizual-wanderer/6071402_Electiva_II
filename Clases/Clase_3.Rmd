@@ -1,0 +1,144 @@
+---
+title: "Untitled"
+author: "Joshua Kock"
+date: "2/7/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+```
+
+http://biostat.mc.vanderbilt.edu/wiki/pub/Main/DataSets/ari.html#levels.clin
+
+
+```{r}
+ari <- read.csv()
+```
+
+# Funciones con Operador %>% 
+
+Pasa un objeto y luego una funcion
+
+```{r}
+str(ari) #Funcion y luego objeto
+ari %>% str() #objeto luego funcion
+```
+
+Ejercicio
+Seleccionen la talla (lght) y peso de todos los bebes con un peso a nacer menor a 2500g (biwt), solo los primeros 10 resultados
+```{r}
+
+```
+
+Revisen la funcion count de dplyr y haga 2 operaciones con ella y explique en sus propias palabras.
+
+Count muestra por defecto los datos perdidos?
+
+Crea un nuevo objeto ari_2 con las variables de ID, peso, leucocitos, linfocitos, circunferencia craneo, peso en gramos al nacer, talla al nacer, temperatura, oximetria, edad en dias, omfalitis y conjuntivitis.
+```{r}
+
+```
+
+# Crear variables con funcion mutate()
+
+Ejercicio:
+Creen una nueva variable biwt_2 que sea la mitad del peso original
+Hacerlo de forma base R y con mutate()
+
+Miren como funciona mutate con el buscador de ayuda, miren las funciones de ayuda (Helper functions)
+```{r}
+
+```
+
+Si no se asgina la nueva variable no se guarda en el dataframe.
+```{r}
+ari %>% 
+  mutate(h_lgth = lgth/2)
+```
+
+```{r}
+ari <- 
+  ari %>%
+  mutate(h_lgth = lgth/2)
+```
+
+Se pueden crear mas de una variable a la vez
+```{r}
+ari %>%
+  mutate(tasa_linf_bla = lpcc/wbco,
+         tasa_peso_talla = wght/lgth,
+         pct_cir = hcir/100)
+```
+
+# Helper functions en mutate
+
+1) ifelse
+2) recode
+3) case_when
+
+## Ifelse
+Ifelse es una funcion que crea una variable indicadora 1/0 basada en una condicion
+```{r}
+ari %>% 
+  mutate(bajo_peso = if_else(wght <2500,1,0))
+```
+
+Ejericio
+con ifelse genere una variable indicadora para datos perdidos de recuento globulos blancos wbco y contar estos datos (usar funcion is.na)
+
+genere una variable indicadora para la variable clin ifentificado los pacientes que se les tomo muestra (sample o yes) que sean de etiopia. Cuantos son?
+
+## recode
+Recode como el nombre lo indica recodifica una variable que sea un factor en el caso de R.
+sintaxis: recode(.x, ... default = NULL, missing = NULL)
+.x: un vector (variable) a recodificar
+...: especificacion de recodificar (valor actual = nuevo valor)
+.default: si lo especificas los valores que no cumplan con la regla anterior adquieren este valor.
+missing: si especificado los valores perdidos se les asignara este valor.
+
+Estamos recodificando Y como 1 y N como 0 en la variable de enfermedad
+```{r}
+ari %>% 
+  mutate(enfermedad = recode(sickc, "Y" = 1, "N" = 0))
+```
+
+Ejercicio:
+recodigica la variable impcl en 4 grupos P, S, M y otros y nombrar la variable patron:
+
+No P,S or M
+No P,S,M-oth
+P only
+S only
+M only
+P and S
+P and M
+M and S
+P,M and S
+```{r}
+
+```
+
+##Case when
+case when es una funcion para variables mas complejas que ifelse y recode, es util cuando la nueva variable es la funcion de multiples variables.
+
+Sintaxis: case_when(...)
+a la izquierda van las variables y reglas que tiene que cumplir a la derecha la variable en la que se tiene que crear esto se separa con ~
+
+Quiero saber que bebes de etiopia tienen peso normal al nacer (2500 a 3800g) en etiopia
+```{r}
+ari %>% 
+  mutate(
+    etiopia_peso = case_when(
+    country == "Ethiopia" & wght >= 250 & wght <= 3800 ~ "et_peso_norm"
+  )
+)
+```
+
+ejercicio case when
+determinar los bebes de papa nueva guinea que tengan un peso mayor a 3000 y no se hicieron la prueba clinica o la negaron (clin).
+determinar los pacientes con conteo de blancos mayor a 10mil con una frecuencia respiratoria rr mayor a 60 con puncion lumbar positiva (lp.pos)
