@@ -1,0 +1,219 @@
+---
+title: "Taller_Sesion_4"
+author: "Joshua Kock"
+date: "2/14/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Cargar paquete tidyverse
+```{r}
+#insertar codigo
+```
+
+Cargar base de datos: https://github.com/vizual-wanderer/6071402_Electiva_II/raw/master/Base_datos_electiva/wwlist_merged.RData
+```{r}
+load(url("https://github.com/vizual-wanderer/6071402_Electiva_II/raw/master/Base_datos_electiva/wwlist_merged.RData"))
+```
+
+# Pregunta 1
+- Cuente el numero de observaciones que tienen NA para la variable `state`
+- Usando `filter()` descarta todas las observaciones que tienen NA para la variable `state`.
+- Usando `mutate()` y `if_else()`, crea una [y guarda] 0/1 variable `en_estado`que sea igual a 1 si el estado es igual a Washington y 0 de lo contrario.
+- Investigue los valores de la nueva variable `en_estatado`, confirme de que esta variable no tenga valores perdidos (codigo).
+
+```{r}
+
+```
+
+# Pregunta 2
+- Cuente la cantidad de observaciones donde el valor de `pop_total_zip` es igual a 0.
+- Cuente la cantidad de observaciones donde el valor de `pop_total_zip` es igual a NA
+- Descarte las observaciones donde el valor de `pop_total_zip` es igual a 0
+∗ NOTA: no descartare observaciones donde el valor de pop_total_zip sea igual a NA
+tiene que asignar a la base de datos wwlist
+
+```{r}
+
+```
+
+# Pregunta 3.
+Elimine las observaciones que tengan los siguientes valores para la variable `state`: "AP", "MP": estos valores se refieren a territorios o son errores, asigne estos resultados a wwlist.
+
+```{r}
+
+```
+
+# Pregunta 4. 
+Investigue la variable de raza / etnicidad, variable `ethn_code` de la siguiente manera: 
+- ¿Qué "tipo" de variable es?
+- crear una tabla de frecuencias
+- contar el numero de valores de NA
+
+```{r}
+
+```
+
+# Pregunts 5.
+
+NOTA: EN ESTA PREGUNTA, LE DOY LAS RESPUESTAS; TODO LO QUE TIENES QUE HACER ES EJECUTAR EL SIGUIENTE CODIGO CHUNK.
+
+La variable `ethn_code` combina asiaticos, nativos hawaianos e isleños del Pacífico en una categoría. 
+Para ser coherente con la variable de nivel de perspectiva `ethn_code`, creamos una variable `pop_api_zip` igual a la suma de `pop_asian_zip` y `pop_nativehawaii_zip`.
+
+Siguiremos estos pasos:
+- verifique cuantos valores perdidos tienen las "variables de entrada" `pop_asian_zip` y `pop_nativehawaii_zip`
+- crear la nueva variable
+- Verifique el valor de la nueva variable para las observaciones que tenían valores faltantes en las variables de entrada 
+- borre las variables de entrada.
+
+```{r}
+#investigar la variable 
+wwlist %>% 
+  filter(is.na(pop_asian_zip)) %>% 
+  count()
+
+wwlist %>% 
+  filter(is.na(pop_nativehawaii_zip)) %>% 
+  count()
+
+#Crear variable:
+wwlist <- wwlist %>%
+  mutate(
+    pop_api_zip = pop_asian_zip + pop_nativehawaii_zip
+    )
+
+#comprobar el valor de la nueva variable; y verifica el valor de la nueva variable contra el valor de referencia.
+wwlist %>% 
+  filter(is.na(pop_api_zip)) %>% 
+  count() 
+
+wwlist %>% 
+  filter(is.na(pop_asian_zip)) %>% 
+  count(pop_api_zip) 
+
+wwlist %>% 
+  filter(is.na(pop_nativehawaii_zip)) %>%
+  count(pop_api_zip) 
+
+#quitar variable
+wwlist <- wwlist %>% 
+  select(-pop_asian_zip,-pop_nativehawaii_zip)
+```
+
+# Pregunta 6.
+Siga los mismos pasos anteriores para crear una variable `pop_api_state `a partir de las variables de entrada: `pop_asian_state` y `pop_nativehawaii_state`.
+```{r}
+
+```
+
+# Pregunta 7.
+NOTA: EN ESTA PREGUNTA, LE DOY LAS RESPUESTAS; TODO LO QUE TIENES QUE HACER ES EJECUTAR EL SIGUIENTE CODIGO CHUNK
+
+A continuacion, usaremos las medidas a nivel de código postal de la cantidad de personas por raza / etnia para crear medidas a nivel de código postal del porcentaje de personas por raza / etnia
+
+- Antes de crear las nuevas variables, investigue la presencia de observaciones faltantes en las variables de entrada. 
+- Despues crear una nueva variable que sea el porcentaje.
+
+```{r}
+#mostrar nombres de las variables que terminan en zip.
+wwlist %>% 
+  select(ends_with("_zip"),-med_inc_zip) %>%
+  names()
+
+#Investigue los datos perdidas de las variables de entrada.
+wwlist %>% 
+  filter(is.na(pop_total_zip)) %>% 
+  count()
+
+wwlist %>% 
+  filter(is.na(pop_white_zip)) %>% 
+  count()
+
+wwlist %>% 
+  filter(is.na(pop_black_zip)) %>% 
+  count()
+
+#crear nueva variable
+#Nota estamos multiplicando para obtener porcentajes en lugar de proporciones.
+wwlist <- wwlist %>% 
+  mutate(
+    pct_white_zip = pop_white_zip/pop_total_zip*100, 
+    pct_black_zip = pop_black_zip/pop_total_zip*100, 
+    pct_latinx_zip = pop_latinx_zip/pop_total_zip*100, 
+    pct_nativeam_zip = pop_nativeam_zip/pop_total_zip*100, 
+    pct_multirace_zip = pop_multirace_zip/pop_total_zip*100, 
+    pct_otherrace_zip = pop_otherrace_zip/pop_total_zip*100, 
+    pct_api_zip = pop_api_zip/pop_total_zip*100
+)
+
+```
+
+# Pregunta 8.
+Siga los mismos pasos anteriores para crear medidas a nivel estatal del porcentaje de personas por raza / etnia. 
+NOTA: variables terminan en `state` ej: `pop_total_state`
+```{r}
+
+```
+
+#Pregunta 9.
+Usando la funcion `recode()` dentro de `mutate()`, cree una variable llamada `ethn_race` que recodifique la variable de entrada `ethn_code` de la siguiente manera:
+∗ “american indian or alaska native” = “nativo_am”,
+∗ “asian or native hawaiian or other pacific islander” = "api", 
+“black or african american” = "afro_americano",
+∗ “cuban” = “latino”,
+∗ “mexicano / mexicano americano” = “latino”,
+∗ “not reported” = "no_reportado",
+∗ “other-2 or more” = “multiracial”,
+∗ “other spanish/hispanic” = “latino”,
+* "puerto rican” = “latino”,
+* “white”  = “blanco”
+
+Verificar que quedo bien agrupando por `ethn_race` y contar la variable nueva.
+```{r}
+
+```
+
+CORRER EL SIGUENTE CODIGO PARA CREAR LAS VARIABLE FALTANTES.
+```{r}
+wwlist <- wwlist %>%
+  mutate(
+    nativeam_stu = ifelse(ethn_race == "nativo_am",1,0),
+    api_stu = ifelse(ethn_race == "api",1,0),
+    black_stu = ifelse(ethn_race == "afro_americano",1,0),
+    latinx_stu = ifelse(ethn_race == "latino",1,0), 
+    multirace_stu = ifelse(ethn_race == "multiracial",1,0), 
+    white_stu = ifelse(ethn_race == "blanco",1,0), 
+    notreported_stu = ifelse(ethn_race == "not_reportado",1,0)
+)
+```
+
+# Pregunta 10.
+Agrupando por la variable `in_state`, utiliza `Summarize()` para crear las siguiente variable:
+- tot_prosp: un recuento del numero de prospectos adquiridos.
+```{r}
+
+```
+
+# Pregunta 11.
+Agrupando por la variable `in_state`, utiliza `Summarize()` para crear las siguientes variables:
+- tot_prosp: un recuento del numero de prospectos adquiridos.
+- blanco: un recuento del numero de prospectos blancos adquiridos, basado en la variable `white_stu`.
+```{r}
+
+```
+
+# Pregunta 12.
+En esta pregunta, compararemos el ingreso mediano por codigo postal de los prospectos con el ingreso mediano en los estados en los que viven. 
+Para responder a esta pregunta, agrupe por `state` y use `summarize()` para crear las siguientes medidas:
+* tot_prosp: un conteo de numero de prospectos.
+* med_inc_zip_stu: el valor promedio de la variable `med_inc_zip` para cada grupo.
+* med_inc_state: el primer valor de la variable `med_inc_state` para cada uno por grupo.
+sugerencia: `nuevavariable = sum(variable_input, na.rm = TRUE)`
+```{r}
+
+```
+

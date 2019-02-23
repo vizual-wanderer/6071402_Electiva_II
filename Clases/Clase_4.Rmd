@@ -1,16 +1,252 @@
 ---
-title: "Clase_4"
+title: "Clase_4: Group_by y summarize"
 author: "Joshua Kock"
 date: "2/14/2019"
-output: html_document
+output: 
+  pdf_document:
+  toc: true
+  number_sections: true
+  toc_depth: 2
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-
 ```{r}
 library(tidyverse)
+library(lubridate)
 ```
 
+```{r}
+cirugia_fci_2018 <- read_csv("https://raw.githubusercontent.com/vizual-wanderer/6071402_Electiva_II/master/Base_datos_electiva/Cirugia_fci_2018_limpia.csv")
+
+cirugia_fci_2018 <- cirugia_fci_2018 %>% 
+  mutate(Fecha_cirugia = mdy(Fecha_cirugia),
+         Marca_temporal = mdy_hm(Marca_temporal))
+```
+
+# Analisis de datos con funcion `group_by`.
+
+`group_by()` convierte un objeto de dataframe en grupos. 
+Despues de la agrupacion, las funciones que ejecutas en el data frame se realizan "por grupo"
+
+- Parte del paquete dplyr dentro de tidyverse; no es parte de la Base R
+- Funciona mejor con los pipe `%>%` y la funcion de `summarize()`.
+
+Sintaxis basica:
+
+`group_by(objecto, variable por las cuales agruparas separadas por commas)`.
+
+Normalmente, las variables para agrupar son variables de caracteres, factores o integros.
+
+Ejemplo:
+```{r}
+cirugia_fci_2018 %>% 
+  count(Cirujano)
+
+cirugia_fci_2018 %>% 
+  group_by(Cirujano) %>% 
+  count(Cirujano)
+
+```
+
+Por si mismo `group_by()` no hace mucho solo imprime datos
+ejemplo:
+```{r}
+cirugia_fci_2018 %>% 
+  group_by(Cirujano, Tipo_de_Cirugia, ISO)
+```
+
+Pero una vez que se agrupa un objeto, todas las funciones subsiguientes se ejecutan por separado "por grupo"
+
+```{r}
+cirugia_fci_2018 %>% 
+  group_by(Cirujano, Tipo_de_Cirugia, ISO) %>% 
+  count()
+```
+
+A continuacion, usaremos la funcion `class()` para mostrar si el dataframe esta agrupado
+
+- Por ahora, solo piensa en `class()` como una funcion que proporciona informacion sobre un objeto.
+- Similar a `typeof()`, pero `class()` proporciona informacion diferente sobre el objeto
+```{r}
+class(cirugia_fci_2018)
+
+df_temp <- cirugia_fci_2018 %>% 
+  group_by(Cirujano, Residente)
+
+class(df_temp)
+```
+
+Para desagrupar un objeto se usa la funcion `ungroup()`.
+```{r}
+df_temp <- ungroup(df_temp)
+class(df_temp)
+```
+
+Ejericio:
+Usando group by
+- Determine los grupos de residentes que hay.
+```{r}
+cirugia_fci_2018 %>% 
+  group_by(Residente) %>% 
+  count()
+```
+
+- Determine los grupo de cirujano y residente que operan.
+```{r}
+cirugia_fci_2018 %>% 
+  group_by(Cirujano, Residente) %>% 
+  count()
+```
+
+- Determine los grupos de cirujano y residentes con un tiempo quirurgico mayor a 200 min (usar filter).
+```{r}
+cirugia_fci_2018 %>% 
+  group_by(Cirujano, Residente) %>% 
+  filter(Tiempo_quirurgico > 200) %>% 
+  count()
+```
+
+
+# Analisis de datos con funcion `summarize()`.
+
+`summarize()` realiza los calculos por filas; luego se colapsa en una sola fila.
+uso y sintaxis: `summarize(.data,....)
+
+argumentos: 
+- `.data`: un dataframe; se omitir si se coloca despues de pipe `%>%`.
+- `...`: Par(es) nombre(s)-valor(es) y su respectiva funcion(es) de resumen.
+El nombre sera el nombre de la variable en el resultado.
+El valor debe ser una expresion que devuelve un solo valor como `min()`, `n()` etc.
+
+Valor: (lo que `summarize` devuelve / crea)
+- Objeto de la misma clase que `.data`. ; el objeto tendra una observacion "por grupo"
+
+funciones utiles en summarize:
+?dplyr::summarize
+
+ejemplo:
+```{r}
+#Edad promedio de la cohorte 2018
+cirugia_fci_2018 %>% 
+  summarize(prom_edad = mean(Edad, na.rm = TRUE))
+```
+
+```{r}
+#Mediana de tiempo quirurgico para el 2018.
+cirugia_fci_2018 %>% 
+  summarize(med_temp_qx = median(Tiempo_quirurgico, na.rm = TRUE))
+```
+
+se pueden hacer multiples operaciones
+```{r}
+cirugia_fci_2018 %>% 
+  summarize(prom_edad = mean(Edad, na.rm = TRUE),
+            med_temp_qx = median(Tiempo_quirurgico, na.rm = TRUE),
+            total = n())
+```
+
+Ejericio: 
+Determine los tiempos promedios, min y max de estadia hospitalaria.
+La mediana de estancia en piso.
+```{r}
+cirugia_fci_2018 %>% 
+  summarize(
+    t_prom_hosp = mean(Estancia_piso, na.rm = TRUE),
+    t_median_hosp = median(Estancia_piso, na.rm = TRUE),
+    min_est_hosp = min(Estancia_piso, na.rm = TRUE),
+    max_est_hosp = max(Estancia_piso, na.rm = TRUE),
+    total = n()
+  )
+```
+
+
+# Combinando `group_by()` con `summarize()`.
+
+`summarize()` realiza calculos en todas las filas del dataframe y luego colapsa el dataframe en una sola fila
+Cuando se agrupa el dataframe, `summarize()` realiza calculos en filas dentro de un grupo y luego se colapsa en una sola fila para cada grupo.
+
+ejemplo:
+```{r}
+cirugia_fci_2018 %>% 
+  group_by(Residente) %>% 
+  summarize(edad_median_pac_resi = mean(Edad, na.rm = TRUE)) %>% 
+  arrange(desc(edad_median_pac_resi))
+```
+
+Ejercicio:
+Determine el tiempo promedio de cirugia de cada cirujano
+```{r}
+cirugia_fci_2018 %>% 
+  group_by(Cirujano) %>% 
+  summarize(
+    t_med_quir = mean(Tiempo_quirurgico, na.rm = TRUE),
+    t_min_cx = min(Tiempo_quirurgico, na.rm = TRUE),
+    t_max_cx = max(Tiempo_quirurgico, na.rm = TRUE)
+  )
+```
+
+Determine el tiempo promedio de una cirugia de cada cirujano con residente.
+```{r}
+cirugia_fci_2018 %>% 
+  group_by(Cirujano, Residente) %>% 
+  summarize(
+    t_prom_cir_resi = mean(Tiempo_quirurgico, na.rm = TRUE)
+  )
+```
+
+
+# Combinando summarize() y count ().
+La funcion para contar `n()` no toma argumentos y devuelve el tamaño del grupo actual.
+
+numero de complicaciones quirurgicas por cirujano.
+```{r}
+cirugia_fci_2018 %>% 
+  group_by(Cirujano, Complicacion_Quirurgica) %>% 
+  summarize(comp_qx = n())
+
+cirugia_fci_2018 %>% 
+  group_by(Cirujano) %>% 
+  count(Complicacion_Quirurgica)
+```
+
+Determine el tipo de cirugia(urgencia, programada) por cirujano.
+```{r}
+cirugia_fci_2018 %>% 
+  group_by(Cirujano) %>% 
+  count(Tipo_de_Cirugia) %>% 
+  arrange(desc(Tipo_de_Cirugia))
+
+cirugia_fci_2018 %>% 
+  group_by(Cirujano, Tipo_de_Cirugia) %>% 
+  summarize(total = n())
+```
+
+Determine el numero de interconsulta por cada grupo de cirujano.
+```{r}
+cirugia_fci_2018 %>% 
+  group_by(Cirujano) %>%
+  filter(!is.na(Interconsulta)) %>% 
+  count(Interconsulta, sort = TRUE)
+```
+
+Determine re-intervencion por cada cirujano.
+```{r}
+cirugia_fci_2018 %>% 
+  group_by(Cirujano) %>%
+  filter(Reintervencion != "NO REINTERVENCION") %>% 
+  count(Reintervencion, sort = TRUE)
+```
+
+Determine el numero de cirugias al mes de cada cirujano, y el tiempo promedio en la cirugia. (Sin residente y despues hacer ejericio con residente) Ordenar por mes.
+```{r}
+cirugia_fci_2018 %>% 
+  group_by(Cirujano, mes = month(Fecha_cirugia)) %>%
+  summarize(
+    t_med_cx = mean(Tiempo_quirurgico, na.rm = TRUE),
+    total_cx = n()
+  ) %>% 
+  view()
+```
