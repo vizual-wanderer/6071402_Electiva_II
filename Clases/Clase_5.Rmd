@@ -1,0 +1,147 @@
+---
+title: "Clase_5"
+author: "Joshua Kock"
+date: "2/22/2019"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Cargar paquetes para la sesion
+```{r}
+library(tidyverse)
+library(lubridate)
+```
+
+Cargar la base de datos.
+```{r}
+cirugia_fci_2018 <- read_csv("https://raw.githubusercontent.com/vizual-wanderer/6071402_Electiva_II/master/Base_datos_electiva/Cirugia_fci_2018_limpia.csv")
+
+cirugia_fci_2018 <- cirugia_fci_2018 %>% 
+  mutate(Fecha_cirugia = mdy(Fecha_cirugia),
+         Marca_temporal = mdy_hm(Marca_temporal))
+```
+
+# Ejercicio de factor.
+```{r}
+cirugia_fci_2018 <- cirugia_fci_2018 %>% 
+  mutate(Cirujano_fct = factor(Cirujano))
+
+#Caracteres.
+typeof(cirugia_fci_2018$Cirujano)
+class(cirugia_fci_2018$Cirujano)
+str(cirugia_fci_2018$Cirujano)
+attributes(cirugia_fci_2018$Cirujano)
+
+#Factores.
+typeof(cirugia_fci_2018$Cirujano_fct)
+class(cirugia_fci_2018$Cirujano_fct)
+str(cirugia_fci_2018$Cirujano_fct)
+attributes(cirugia_fci_2018$Cirujano_fct)
+```
+
+```{r}
+cirugia_fci_2018 %>% 
+  filter(Cirujano_fct == 8) %>% 
+  count()
+
+cirugia_fci_2018 %>% 
+  filter(Cirujano_fct == "Paulo Cabrera") %>% 
+  count()
+```
+
+Ejercicio:
+crear una variable llamada mes con la funcion month de lubridate (variable fecha_cirugia), asigna esta variable a la base y explorar con las funciones previas 
+```{r}
+cirugia_fci_2018 <- cirugia_fci_2018 %>% 
+  mutate(mes = month(Fecha_cirugia))
+
+typeof(cirugia_fci_2018$mes)
+str(cirugia_fci_2018$mes)
+class(cirugia_fci_2018$mes)
+attributes(cirugia_fci_2018$mes)
+```
+
+Crear una variable que sea mes_fct y asignar esta a la base de datos. (explorar con las funciones previas)
+```{r}
+cirugia_fci_2018 <- cirugia_fci_2018 %>% 
+  mutate(mes_fct = factor(mes))
+
+typeof(cirugia_fci_2018$mes_fct)
+str(cirugia_fci_2018$mes_fct)
+class(cirugia_fci_2018$mes_fct)
+attributes(cirugia_fci_2018$mes_fct)
+```
+
+#Analisis de datos exploratorios.
+
+### Analisis de una variable (continua)
+
+Tiempo quirurgico
+```{r}
+cirugia_fci_2018 %>% 
+  summarize_at(
+    .vars = vars(Tiempo_quirurgico),
+    .funs = funs(mean, sd, min, max, .args = list(na.rm = TRUE))
+  )
+```
+
+Que pasa si no se incluye: `.args=list(na.rm=TRUE)`
+```{r}
+cirugia_fci_2018 %>% 
+  summarize_at(
+    .vars = vars(Tiempo_quirurgico),
+    .funs = funs(mean, sd, min, max)
+  )
+```
+
+### Variable categoricas o discretas.
+
+Tabla de frecuencias bidireccionales "tabulación cruzada", son importante para la calidad de los datos
+Cuando crea un analisis categórico var a partir de una unica "entrada" categorica.
+
+Las tablas bidireccionales nos muestran si lo hicimos correctamente
+Tablas bidireccionales utiles para comprender patrones de omision en encuestas
+
+`group_by(var1) %>% count(var2)`
+
+```{r}
+cirugia_fci_2018 %>% 
+  group_by(Sexo) %>% 
+  count(Tipo_de_Cirugia) 
+```
+
+No se ve muy bien podemos arreglarlo con `spread`
+```{r}
+cirugia_fci_2018 %>% 
+  group_by(Sexo) %>% 
+  count(Tipo_de_Cirugia) %>% 
+  as_factor() %>% 
+  spread(Sexo,n)
+```
+
+### Categorica con categorica
+```{r}
+cirugia_fci_2018 %>% 
+  group_by(Cirujano) %>% 
+  count(Clasificacion_Herida_Quirurgica) %>% 
+  spread(Cirujano, n) %>% 
+  filter(!is.na(Clasificacion_Herida_Quirurgica))
+```
+
+### categorica y continua.
+
+`group_by(var_categorica) %>% summarize_at(.vars = vars(var_continua)`
+```{r}
+cirugia_fci_2018 %>% 
+  group_by(Cirujano) %>% 
+  summarize_at(
+    .vars = vars(Tiempo_quirurgico),
+    .funs = funs(mean, sd, min, max, .args=list(na.rm=TRUE))
+  )
+```
+
