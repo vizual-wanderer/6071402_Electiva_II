@@ -1,0 +1,261 @@
+---
+title: "Clase_09_MAR_2019"
+author: "Joshua Kock"
+date: "3/8/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(haven)
+library(labelled)
+```
+
+# "Estructura" de Dato vs Datos.
+
+Antes de definir  el concepto de "datos ordenados", dedicaremos un tiempo a términos / conceptos básicos sobre los conjuntos de datos.
+
+Esta discusión se basa en el artículo de 2014 [Tidy Data](https://www.jstatsoft.org/article/view/v059i10) por Hadley Wickham.
+
+ - Wickham (2014) distingue entre "estructura de datos" y los "conceptos de datos"
+
+## Estructura de base de datos.
+
+La estructura de la _base de datos_ se refiere al "diseño físico" de un conjunto de datos.
+
+ - Por lo general, bases de datos son "_tablas_ rectangulares compuestas de _filas y columnas_".
+ - Una celda es la intersección de una columna y una fila (celdas de reflexión en Microsoft Excel)
+
+Existen muchas estructuras de datos alternativas para presentar los mismos datos subyacentes.
+
+```{r}
+#tratamiento como columna y nombres como filas
+estructura_a <- tibble(
+  nombre = c("Juan Martinez","Maria Salazar","Cecilia Andrade"),
+  tratamiento_a = c(NA, 16, 3),
+  tratamiento_b = c(2, 11, 1)
+)
+
+#tratamiento como filas y nombres como columnas
+estructura_b <- tibble(
+  Tratamiento   = c("tratamiento_a","tratamiento_b"),
+  Juan Martinez   = c(NA, 2),
+  Maria Salazar = c(16,11),
+  Mary_Johnson = c(3,1)
+)
+
+estructura_a
+
+estructura_b
+```
+
+### Unidad de Analisis.
+
+_unidad de analisis_ un termino por Wickham:
+
+ - Lo que representa cada fila en una base de datos (en referencia a la disposición física del conjunto de datos).
+
+Ejemplos de diferentes unidades de análisis:
+
+- Si cada fila representa a un estudiante, tiene datos a nivel de estudiante.
+- Si cada fila representa un curso de estudiante, tiene datos de nivel de curso de estudiante.
+- Si cada fila representa un año de organización, tiene datos de nivel de año de organización.
+
+- ¿Qué representa cada fila en la base de datos `ipeds_hc_temp`?
+
+A continuación, cargamos los datos del número de inscritos en un periodo de 12 meses para el año académico 2015-2016 del Sistema Integrado de Datos de Educación Postsecundaria (IPEDS)
+```{r}
+ipeds_hc_temp <- 
+  read_dta(file="https://github.com/ozanj/rclass/raw/master/data/ipeds/effy/ey15-16_hc.dta", encoding = NULL) %>% 
+  select(unitid,lstudy,efytotlt) %>% 
+  arrange(unitid,lstudy)
+
+#etiqueta de la variable.
+ipeds_hc_temp %>% 
+  var_label()
+
+ipeds_hc_temp %>% 
+  head(n=10)
+
+#convertir en factor por las caracterista de la variable
+ipeds_hc_temp %>% 
+  head(n=10) %>% 
+  as_factor()
+
+```
+
+### Que variable(s) identifican de forma unica un fila en una base de datos.
+
+Identificar qué combinación de variables identifica de forma única las filas en una base de datos le ayuda a entender la "estructura" de su base.
+
+- Dicho de otra manera: para cada valor de esta variable (o combinación de variables), solo hay una fila
+- Muy importante para remodelar / ordenar datos tanto como para unir / fusionar marcos de datos.
+- A veces, un libro de códigos (codebook) le dirá explícitamente qué variables identifican de forma única las filas
+- A veces tienes que resolver esto a través de la investigación.
+
+
+## Datasets conceptos
+
+Estos conceptos de conjunto de datos como distintos de la estructura de la base de datos (filas y columnas)
+
+La diferencia entre estructura de datos y conceptos de datos:
+
+- La estructura de datos se refiere al diseño físico de los datos (por ejemplo, lo que realmente representan las filas y columnas en una base)
+- Los conceptos de datos, que fueron introducidos por Wickham (2014), se refieren a cómo deben estructurarse los datos.
+
+<br>
+_Unidad de observación/nivel de observación_ [término de Wickham]
+> “En un análisis, puede haber múltiples _niveles de observaciones_. Por ejemplo, en un ensayo de nuevos medicamentos para la alergia podríamos tener tres tipos de observación: datos demográficos recopilados de cada persona (edad, sexo, raza), datos médicos recopilados de cada persona cada día (número de estornudos, enrojecimiento de los ojos), y datos meteorológicos recopilados cada día (temperatura, recuento de polen) (Wickham 2014, p. 4) "
+
+<br>
+
+### Valores, variables y observaciones.
+Wickham (2014, p. 3): “Un conjunto de datos es un conjunto de valores, generalmente números (si son cuantitativos) o strings (si son cualitativos). Los valores se organizan de dos maneras. Cada valor pertenece a una variable y una observación ".
+
+- valor: un elemento único dentro de alguna estructura de datos (por ejemplo, vector, lista), generalmente un número o una cadena de caracteres.
+
+- variables: "Una variable contiene todos los valores que miden el mismo atributo subyacente (como altura, temperatura, duración) en todas las unidades"
+
+- observaciones: "Una observación contiene todos los valores medidos en la misma unidad (como una persona o un día) a través de atributos"
+```{r}
+rm(ipeds_hc_temp)
+```
+
+# Definir datos tidy vs untidy.
+
+## Reglas para definir datos tidy.
+Capítulo 12 de Wickham: “Hay tres reglas interrelacionadas que hacen que un conjunto de datos sea ordenado:
+
+- Cada _variable_ debe tener su propia _columna_.
+- Cada _observación_ debe tener su propia _fila_.
+- Cada _valor_ debe tener su propia _celda_
+- [Regla adicional de Wickham (2014)] Cada tipo de unidad de observación forma una tabla.
+
+_Representacion visual de datos tidy_
+![](http://r4ds.had.co.nz/images/tidy-1.png)
+un ejemplo de tidy data.
+```{r}
+table1
+```
+
+## Datos Untidy.
+> "Todas las bases de datos tidy estan ordenados de forma iguales, pero cada conjunto de datos desordenado es complicado a su manera". –– Hadley Wickham
+
+Version desordenada de la `tabla1`
+
+```{r}
+table2
+```
+
+## Diagnostico  y manejo de datos untidy (desordenados).
+
+El primer paso para transformar los datos desordenados en datos ordenados es diagnosticar qué principios de datos ordenados se han violado.
+
+Recordemos los tres principios de datos ordenados:
+
+1. Cada variable debe tener su propia columna.
+2. Cada observación debe tener su propia fila.
+3. Cada valor debe tener su propia celda.
+
+Vamos a diagnosticar los problemas con la tabla 2 respondiendo estas preguntas
+
+1. ¿Cada variable tiene su propia columna?
+  - Si no, ¿cómo viola el conjunto de datos este principio?
+  - ¿Cuáles deberían ser las variables?
+2. ¿Cada observación tiene su propia fila?
+  - Si no, ¿cómo viola el conjunto de datos este principio?
+  - ¿Qué representa realmente cada fila?
+3. ¿Qué debe representar cada fila?
+  - ¿Cada valor tiene su propia celda ".
+  - Si no, ¿cómo viola el conjunto de datos este principio?
+```{r}
+table2
+```
+
+Ejericio:
+Respondan las preguntas para las tablas: 1, 3 y 5.
+```{r}
+table1
+table3
+table5
+```
+
+# Ordenando datos Tidy Data.
+
+Pasos para ordenar los datos.
+
+- Diagnosicar el problema.
+- Dibujar como quieres que se vean los datos ordenados.
+- Tranformar los datos.
+
+## Causas comunies de datos desordenados.
+
+_Las causas mas comunes e importantes de datos desordenados_
+
+1. Algunos nombres de columnas no son nombres de la variables sino son una variable (tabla 4a y 4b).
+  - Una variable esta en multiples columnas `spread` (1999, 2000)
+  - Una fila tiene multiples observaciones.
+```{r}
+table4b
+```
+
+2. Una observacion esta repartida en varias filas(ej. tabla 2)
+  - Una Columna identifica el tipo de variable `type` y otra columna tiene el valor de cada variables `count`.
+```{r}
+table2
+```
+
+_Otras cuasas comunes de datos no organizados_
+
+3. Celdas individuales en cada columna continen multiples variables (ej `rate` n la tabla 3)
+```{r}
+table3
+```
+
+4. Los valores de una sola variables estan separadas en multiples columnas (ej tabla 5) `century` y `year`.
+las variables estan separadas.
+```{r}
+table5
+```
+
+## Ordenar los datos - Gather.
+El proceso de ordenar/transformar los datos de las columnas que representan valoes de llama GATHER.
+por fuera del tidyverse esta operacion de llama reshaping, wide to long.
+Queremos convertir la tabla 4a en la siguiente tabla
+```{r}
+table1 %>% 
+  select(country, year, cases)
+```
+
+Se logra con la funcion gather.
+```{r}
+?gather
+```
+
+```{r}
+table4a %>% 
+  gather(`1999`, `2000`, key = "Anio", value = "casos")
+```
+
+## Ordenar los datos - Spread.
+
+Este tipo de estructura se ve mucho.
+```{r}
+table2
+```
+
+El objetivo es transformar la tabla 2 en la tabla 1.
+```{r}
+?spread
+```
+
+```{r}
+table2 %>% 
+  spread(key = type, value = count)
+table1
+```
+
