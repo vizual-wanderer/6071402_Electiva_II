@@ -1,0 +1,207 @@
+---
+title: "CLase ggplot2"
+author: "Joshua Kock"
+output: html_document
+---
+
+## Cargar paquetes
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(gapminder)
+library(tidyverse)
+library(here)
+```
+
+
+## Tidy Data
+Trabajar con datos tidy es la mejor forma para sacar provecho de las funciones de ggplot2.
+
+## Hacer el enlace entre lo que vas a mapear y tus datos
+
+Exploracion de datos inicial.
+```{r}
+gapminder
+```
+
+crear objeto p
+```{r}
+p <- ggplot(data = gapminder)
+```
+
+agregar las capas al objeto p
+las esteticas mas intuitivas de mapear son la variable x, y otras capas de esteticas son el color, forma y tamano.
+Esto no escoje el color o el tamano de la variable sino va especificar que variable (datos) se representan por color y por tamanio en la grafica.
+```{r}
+p <- ggplot(data = gapminder,
+            mapping = aes(x = gdpPercap,
+                          y = lifeExp))
+```
+
+imprmir objeto p
+```{r}
+p
+```
+
+Agregar la geometria a las graficas, cada geometria es una funcion que puede incluir sus propios argumentos.
+```{r}
+p + geom_point() 
+```
+
+
+## Crear tus graficas por capas
+
+En ggplot 2 puedes ir agregado las capas con l `+` sin problemas.
+Importante la ubicacion del +
+correcto: `ggplot(datos, capa, aes(x,y)) +`
+Incorrecto: `ggplot(datos, capa, aes(x,y))`
+            `+ geom_point()`
+
+```{r}
+
+p <- ggplot(data = gapminder,
+            mapping = aes(x = gdpPercap,
+                          y = lifeExp))
+p + geom_smooth()
+
+```
+
+Dos geometrias en la misma grafica
+```{r}
+
+p <- ggplot(data = gapminder,
+            mapping = aes(x = gdpPercap,
+                          y = lifeExp))
+p + geom_point() + geom_smooth() 
+
+```
+
+Que considera que puede mejorar en esta grafica
+```{r}
+p <- ggplot(data = gapminder,
+            mapping = aes(x = gdpPercap,
+                          y = lifeExp))
+p + geom_point() + geom_smooth(method = "lm") 
+```
+
+
+```{r}
+
+p <- ggplot(data = gapminder,
+            mapping = aes(x = gdpPercap,
+                          y = lifeExp))
+p + geom_point() +
+    geom_smooth(method = "gam") +
+    scale_x_log10()
+
+```
+
+```{r}
+
+p <- ggplot(data = gapminder, mapping = aes(x = gdpPercap, y = lifeExp))
+
+p + geom_point() +
+    geom_smooth(method = "gam") +
+    scale_x_log10(labels = scales::dollar) +
+    labs(x = "PIB per capita",
+         y = "expectativa de vida en años",
+         title = "Crecimiento economico y espectativa de vida",
+         subtitle = "Cada punto es pais por año",
+         caption = "Fuente de datos: Gapminder")
+```
+
+
+## Mapear esteticas vs establecer esteticas.
+
+```{r}
+
+p <- ggplot(data = gapminder,
+            mapping = aes(x = gdpPercap,
+                          y = lifeExp,
+                          color = "purple"))
+p + geom_point() +
+    geom_smooth(method = "loess") +
+    scale_x_log10()
+```
+En que la embarramos aca?
+
+Forma correcta de establecer el color de los geom
+```{r}
+
+p <- ggplot(data = gapminder,
+            mapping = aes(x = gdpPercap,
+                          y = lifeExp))
+p + geom_point(color = "purple") +
+    geom_smooth(method = "loess") +
+    scale_x_log10()
+```
+
+En este ejemplos algunas esteticas se mapearon y otras se establecieron.
+```{r}
+
+p <- ggplot(data = gapminder,
+            mapping = aes(x = gdpPercap,
+                          y = lifeExp)) 
+p + geom_point(alpha = 0.3) +
+    geom_smooth(color = "orange", se = FALSE, size = 2, method = "lm") +
+    scale_x_log10()
+```
+
+
+```{r}
+gapminder
+
+p <- ggplot(data = gapminder,
+            mapping = aes(x = gdpPercap,
+                          y = lifeExp,
+                          color = continent))
+p + geom_point() +
+    geom_smooth(method = "loess") +
+    scale_x_log10()
+```
+
+```{r}
+
+p <- ggplot(data = gapminder,
+            mapping = aes(x = gdpPercap,
+                          y = lifeExp,
+                          color = continent,
+                          fill = continent))
+p + geom_point() +
+    geom_smooth(method = "loess") +
+    scale_x_log10()
+```
+
+## La estetica se puede mapear para cada geometria. 
+
+En este caso quiero que me identique a que continente pertenece cada punto y la tendencia mundial en general
+```{r}
+
+p <- ggplot(data = gapminder, mapping = aes(x = gdpPercap, y = lifeExp))
+
+p + geom_point(mapping = aes(color = continent)) +
+    geom_smooth(method = "loess") +
+    scale_x_log10()
+```
+
+En este ejemplo mapeamos una variable continua a color.
+```{r}
+
+p <- ggplot(data = gapminder,
+            mapping = aes(x = gdpPercap,
+                          y = lifeExp))
+p + geom_point(mapping = aes(color = log(pop))) +
+    scale_x_log10()    
+```
+
+## Guardar tu trabao
+
+```{r knitopt, echo = TRUE, eval = FALSE}
+knitr::opts_chunk$set(fig.width=8, fig.height=5) 
+```
+
+
+```{r 03-make-a-plot-20, echo=TRUE, eval=FALSE}
+ggsave(nombre_de_archivo = "figuras/mi_figura.png")
+```

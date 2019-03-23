@@ -2,7 +2,9 @@
 title: "Clase_09_MAR_2019"
 author: "Joshua Kock"
 date: "3/8/2019"
-output: html_document
+output:
+  html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -42,9 +44,9 @@ estructura_a <- tibble(
 
 #tratamiento como filas y nombres como columnas
 estructura_b <- tibble(
-  Tratamiento   = c("tratamiento_a","tratamiento_b"),
-  Juan Martinez   = c(NA, 2),
-  Maria Salazar = c(16,11),
+  Tratamiento = c("tratamiento_a","tratamiento_b"),
+  Juan_Martinez = c(NA, 2),
+  Maria_Salazar = c(16,11),
   Mary_Johnson = c(3,1)
 )
 
@@ -69,8 +71,8 @@ Ejemplos de diferentes unidades de análisis:
 
 A continuación, cargamos los datos del número de inscritos en un periodo de 12 meses para el año académico 2015-2016 del Sistema Integrado de Datos de Educación Postsecundaria (IPEDS)
 ```{r}
-ipeds_hc_temp <- 
-  read_dta(file="https://github.com/ozanj/rclass/raw/master/data/ipeds/effy/ey15-16_hc.dta", encoding = NULL) %>% 
+ipeds_hc_temp <- read_dta(file = "https://github.com/vizual-wanderer/6071402_Electiva_II/blob/master/Base_datos_electiva/ey15-16_hc.dta?raw=true", 
+                          encoding = NULL) %>%
   select(unitid,lstudy,efytotlt) %>% 
   arrange(unitid,lstudy)
 
@@ -79,11 +81,11 @@ ipeds_hc_temp %>%
   var_label()
 
 ipeds_hc_temp %>% 
-  head(n=10)
+  head(n = 10)
 
 #convertir en factor por las caracterista de la variable
 ipeds_hc_temp %>% 
-  head(n=10) %>% 
+  head(n = 10) %>% 
   as_factor()
 
 ```
