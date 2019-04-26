@@ -1,0 +1,123 @@
+---
+title: "Clase_inferencia_tidy"
+author: "Joshua Kock"
+date: "4/11/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r cargar paquetes}
+library(tidyverse)
+library(lubridate)
+library(here)
+library(infer)
+```
+
+```{r}
+diabetes <- read_csv("https://raw.githubusercontent.com/vizual-wanderer/6071402_Electiva_II/master/Base_datos_electiva/diabetes.csv") %>% 
+  mutate(
+    location = as.factor(location), #transformacion a factor
+    gender = as.factor(gender),
+    frame = as.factor(frame)
+  )
+
+
+#cargar datos de gss para ejemplo
+load(url("http://bit.ly/2E65g15"))
+
+#cargar base de cirugia general FCI
+cx_general_fci <- read_csv("https://raw.githubusercontent.com/vizual-wanderer/6071402_Electiva_II/master/Base_datos_electiva/Cirugia_fci_2018_limpia.csv")
+```
+
+Quiero determinar si el promedio HbA1C es diferente para hombres y mujeres. 
+```{r}
+
+est_obs <- diabetes %>% 
+  group_by(gender) %>% 
+  summarize(estad_obs = mean(glyhb, na.rm = TRUE)) %>% 
+  pull() %>% 
+  diff()
+
+dist_nula <- diabetes %>% 
+  specify(glyhb ~ gender) %>% 
+  hypothesize(null = "independence") %>% 
+  generate(reps = 1500, type = "permute") %>% 
+  calculate(stat = "diff in means", order = c("female", "male"))
+
+dist_nula %>% 
+  get_p_value(est_obs, direction = "both")
+
+diabetes %>% 
+  t_test(glyhb ~ gender, 
+         alternative = "two_sided",
+         order = c("female", "male"))
+
+```
+
+
+# Re-intervencion y cirujanos.
+
+Para el siguiente ejercicio me gustaria dereminar la asociacion entre re-intervencion y cirujanos en la fundacion cardioinfantil de bogota.
+
+H_0: La re-intervencion no esta asociado al cirujano.
+H_1: La re-intervencion esta asociada al cirujano.
+```{r}
+
+cx_ret <- cx_general_fci %>% 
+  mutate(re_inter = if_else(
+    Reintervencion == "NO REINTERVENCION", "No_re_intervencion", "Si_re_intervencion"
+  )) %>% 
+  select(Cirujano, re_inter, Reintervencion) %>% 
+  filter(!is.na(re_inter))
+
+cx_ret %>% 
+  count(re_inter, Cirujano) %>% 
+  spread(Cirujano, n)
+
+cx_ret %>% 
+  ggplot(aes(re_inter, fill = Cirujano)) +
+  geom_bar(position = "dodge")
+
+ji_obs <- cx_ret %>% 
+  specify(re_inter ~ Cirujano) %>% 
+  calculate(stat = "Chisq") %>% 
+  pull()
+
+chi_nula <- cx_ret %>% 
+  specify(re_inter ~ Cirujano) %>% 
+  hypothesize(null = "independence") %>% 
+  generate(reps = 1500, type = "permute") %>% 
+  calculate(stat = "Chisq")
+
+chi_nula %>% 
+  get_p_value(ji_obs, direction = "greater")
+
+#approximacion
+cx_ret %>% 
+  chisq_test(re_inter ~ Cirujano)
+```
+
+Solo con Paulo Cabrera vs la proporcion de los otros cirujanos.
+
+```{r}
+ji_obs_cir <- cx_ret %>% 
+  mutate(cir = if_else(Cirujano == "Paulo Cabrera", "Paulo_Cabrera", "No_Paulo")) %>% 
+  specify(cir ~ re_inter, success = "Paulo_Cabrera") %>% 
+  calculate(stat = "diff in props", order = c("Si_re_intervencion", "No_re_intervencion")) %>% 
+  pull()
+
+chi_nula_cir <- cx_ret %>% 
+  mutate(cir = if_else(Cirujano == "Paulo Cabrera", "Paulo_Cabrera", "No_Paulo")) %>% 
+  specify(cir ~ re_inter, success = "Paulo_Cabrera") %>% 
+  hypothesize(null = "independence") %>% 
+  generate(reps = 1500, type = "permute") %>% 
+  calculate(stat = "diff in props", order = c("Si_re_intervencion", "No_re_intervencion"))
+
+chi_nula_cir %>% 
+  get_p_value(ji_obs_cir, direction = "greater")
+```
+
