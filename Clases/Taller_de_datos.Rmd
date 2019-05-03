@@ -1,0 +1,269 @@
+---
+title: "Taller_analisis_de_datos_pesos"
+author: "Joshua Kock"
+date: "4/26/2019"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Cargar paquetes
+```{r}
+library(tidyverse)
+library(readxl)
+library(infer)
+library(broom)
+library(pander)
+
+theme_set(theme_light())
+```
+
+```{r}
+pesos_col <- read_csv("https://raw.githubusercontent.com/vizual-wanderer/6071402_Electiva_II/master/Base_datos_electiva/Base_bajo_peso.csv")
+```
+
+verificar numero de datos peridos y el nombre de las variables
+```{r}
+map_df(pesos_col, ~sum(is.na(.)))
+names(pesos_col)
+str(pesos_col)
+```
+
+Si verificamos el codebook vemos que tenemos 7 de las 15 variables como categoricas las cuales las podemos converitr en factores para hacer los analisis en R.
+
+- Tipo de parto: `tipo_par`
+- Multiplicidad del parto: `mul_part`
+- Regimen de seguridad social: `seg_soci`
+- Escolaridad Padre y madre: `niv_edum` y `niv_edup`
+- Estado civil: `est_civm`
+- Area de residencia: `area_res`
+
+Hay que verificar cuales son los valores numerico que tienen cada variable y asi podemos proceder a convertir en factores.
+
+```{r}
+vars_fact <- c("sexo", "tipo_par", "mul_part","seg_soci", "niv_edum", "niv_edup","est_civm", "area_res")
+
+pesos_col %>% 
+  select(vars_fact) %>% 
+  mutate_if(is.numeric, as.factor) %>% 
+  tbl_df() %>% 
+  summary()
+```
+
+Conversion de las variables a factores no quiero borrar la base original asi que asigno este cambio a un nuevo objeto.
+```{r}
+base_pesos_col <- pesos_col %>% 
+  mutate(
+    sexo = recode_factor(sexo, `1` = "Femenino", `2` = "Masculino"),
+    tipo_par = recode_factor(tipo_par, `1` = "Espontaneo", `2` = "Cesarea", `3` = "Instrumentado", `4` = "Ignorado", 
+                             `9` = "Ignorado"),
+    mul_part = recode_factor(mul_part, `1` = "Simple", `2` = "Doble", `3` = "Triple", `4` = "Cuadruple_o_mas"),
+    seg_soci = recode_factor(seg_soci, `1` = "Contributivo", `2` = "Subsidiado", `3` = "Excepcion", `4` =	"Especial", 
+                      `5` = "No_asegurado", .default = NULL),
+    est_civm = recode_factor(est_civm, `1` = "Union_libre_mas_dos", `2` = "Union_libre_menos_dos", `3` =	"Separada", `4` =	"Viuda",
+                      `5` = "Soltera", `6` = "Casada", `9` = "Ignorado", .default = NULL),
+    niv_edum = recode_factor(niv_edum, `1` = "Preescolar", `2` = "Basica_primaria", `3` = "Basica_secundaria", `4` = "Media_academica",
+                        `5` =	"Media_tecnica", `6` = "Normalista", `7` = "Tecnica_profesional", `8` = "Tecnologica", 
+                        `9` = "Profesional", `10` = "Especializacion", `11` = "Maestria", `12` = "Doctorado", `13` = "Ninguno",
+                        `99` =  "Sin_informacion", .default = NULL),
+    niv_edup = recode_factor(niv_edup, `1` = "Preescolar", `2` = "Basica_primaria", `3` = "Basica_secundaria", `4` = "Media_academica",
+                        `5` =	"Media_tecnica", `6` = "Normalista", `7` = "Tecnica_profesional", `8` = "Tecnologica", 
+                        `9` = "Profesional", `10` = "Especializacion", `11` = "Maestria", `12` = "Doctorado", `13` = "Ninguno",
+                        `99` =  "Sin_informacion", .default = NULL),
+    area_res = recode_factor(area_res, `1` = "Cabecera_municipal", `2` = "Centro_poblado", `3` =	"Rural_disperso", .default = NULL)
+    )
+
+#ver la base de datos
+base_pesos_col %>% 
+  view()
+
+#ver datos perdidos:
+map_df(base_pesos_col, ~sum(is.na(.)))
+```
+
+Inicio de analisis
+
+Preguntas a responder
+```{r}
+summary(base_pesos_col)
+```
+
+Ver la relacion que tienen las variables numericas. selecionando unicamente las variables que son numericas.
+```{r}
+base_pesos_col %>% 
+  select_if(is.numeric) %>% 
+  pairs(lower.panel = NULL)
+```
+
+podemos visualizar el nivel educativo
+```{r}
+base_pesos_col %>% 
+  ggplot(aes(niv_edum)) +
+  geom_bar() +
+  coord_flip()
+```
+
+
+porcentajes de conteos: seguridad social de las madres.
+```{r}
+base_pesos_col %>% 
+  count(seg_soci) %>% 
+  mutate(
+    prop = prop.table(n),
+    porcentaje = prop*100)
+```
+
+Me gustaria visualizar la distribucion de pesos y talla segun escolaridad de madre identificando si hay recien nacidos con mayor bajo peso al nacer
+```{r}
+base_pesos_col %>% 
+  ggplot(aes(x = peso_nac, talla_na, color = peso_nac < 2500)) +
+  geom_point() + 
+  facet_wrap(~niv_edum)
+```
+
+
+Quiero ver la talla y peso al nacer por area geografica
+```{r}
+base_pesos_col %>% 
+  ggplot(aes(talla_na, peso_nac, color = area_res)) +
+  geom_jitter() +
+  geom_smooth(method = "lm", se = FALSE)
+```
+
+Diferencia de peso al nacer comparado con el sexo biologico del recien nacido
+```{r}
+base_pesos_col %>% 
+  ggplot(aes(sexo, peso_nac,fill = sexo)) +
+  geom_boxplot()
+```
+
+quiero ver diferecias entre el peso de los recien nacido por sexo al nacer.
+```{r}
+t_test(base_pesos_col, peso_nac ~ sexo, order = c("Femenino", "Masculino"), alternative = "two_sided")
+
+#metodo computacional:
+est_obs_peso <- base_pesos_col %>% 
+  specify(peso_nac ~ sexo) %>% 
+  calculate(stat = "diff in means", order = c("Femenino", "Masculino")) %>% 
+  pull()
+
+dist_nula <- base_pesos_col %>% 
+  specify(peso_nac ~ sexo) %>% 
+  hypothesize(null = "independence") %>% 
+  generate(reps = 1000, type = "permute") %>% 
+  calculate(stat = "diff in means", order = c("Femenino", "Masculino"))
+
+dist_nula %>% 
+  get_p_value(est_obs_peso, direction = "two_sided")
+
+visualize(dist_nula) +
+  shade_p_value(dist_nula, direction = "two_sided")
+
+#intervalo de confianza:
+ic_peso <- base_pesos_col %>% 
+  specify(peso_nac ~ sexo) %>% 
+  generate(reps = 1000, type = "bootstrap") %>% 
+  calculate(stat = "diff in means", order = c("Femenino", "Masculino"))
+
+get_confidence_interval(ic_peso)
+```
+
+
+El tipo de parto esta relacionado con el numero de consultas pre-natales? 
+```{r}
+tabla_med_con_par <- base_pesos_col %>%
+  group_by(tipo_par) %>% 
+  summarize(
+    cons_pro = mean(numconsu),
+    cons_ds = sd(numconsu),
+    cons_max = max(numconsu),
+    cons_n = n())
+
+tabla_med_con_par
+```
+
+Prueba estadistica a aplicar para determinar diferencia de medias (variable continua y categorica con > 2 categorias) Podemos contestar la pregunta anterior con la prueba de ANOVA (Analysis of variance), el cual determina si la diferencia en medias de mi poblacion son "ciertas" o son por variablidad de muestreo. Sacoms esto con el calculo del estaditico F.
+```{r}
+estat_F <- base_pesos_col %>% 
+  specify(numconsu ~ tipo_par) %>%
+  calculate(stat = "F") %>% 
+  pull()
+
+dist_nula_F <- base_pesos_col %>% 
+  specify(numconsu ~ tipo_par) %>% 
+  hypothesize(null = "independence") %>%
+  generate(reps = 1000, type = "permute") %>%
+  calculate(stat = "F")
+
+dist_nula_F %>% 
+  get_p_value(estat_F, direction = "greater")
+
+#la prueba de anova se have con la funcion de aov no la anova, la anova solo toma como argumentos objetos de tipo lm o glm.
+aov_con_par <- aov(numconsu ~ tipo_par, data = base_pesos_col)
+summary(aov_con_par)
+
+```
+Podemos ver que el estadistico F es de 8.15 el mismo que identificamos en el ejercicio anterior.
+
+Recordar como se lleva a cabo la prueba de hipotesis de anova.
+
+Vemos que nuestro valor p es menor al punto de corte de 0.05 por lo que rechazamos la hipotesis nula, sabemos que hay una diferencia entre medias de los grupos pero no sabemos cual.
+
+Podemos aplicar varias pruebas el ejemplo lo hacemo con el test de Tuley HSD (Tukey Honest Significant Differences) el cual ejecuta una comparacion multiple por pares (pairwise-comparison) entre las medias de cada grupo.
+```{r}
+TukeyHSD(aov_con_par)
+```
+
+con los resultado vemos que la unica diferencia de medias es entre los grupos de cesaria y espontaneo.
+
+De igual forma podemos ver esta tabla de forma grafica aplicando la funcion `plot()` al objeto.
+```{r}
+plot(TukeyHSD(aov_con_par))
+```
+
+Quiero ver si el area de residencia esta asociado con el tipo de parto, mi hipotesis: No hay diferencias del tipo de parto segun zona geografica del parto. 
+```{r}
+base_pesos_col %>% 
+  count(tipo_par, area_res) %>% 
+  spread(area_res, n)
+```
+
+Podemos ver en la tabla de contingencia que hay ciertos valores que son menores a 5 por lo que la prueba de chi cuadrado nos puede dar error al estimar el esperado para cada categoria.
+```{r}
+base_pesos_col %>% 
+  chisq_test(tipo_par ~ area_res)
+```
+
+Intentaremos hacer el metodo computacional
+```{r}
+ji_estad <- base_pesos_col %>% 
+  specify(tipo_par ~ area_res) %>% 
+  calculate(stat = "Chisq") %>% 
+  pull()
+
+ji_dist_nula <- base_pesos_col %>% 
+  specify(tipo_par ~ area_res) %>% 
+  hypothesize(null = "independence") %>% 
+  generate(reps = 1500, type = "permute") %>% 
+  calculate(stat = "Chisq")
+
+ji_dist_nula %>% 
+  get_p_value(ji_estad, direction = "greater")
+```
+
+
+Varios modelos lineales simples. Nos gustaria determinar como se comporta el peso al nacer al compararla en un analisis bivariado por regresion lineal simple
+```{r}
+tabla_coef_lm <- base_pesos_col %>%
+  map(~ lm(base_pesos_col$peso_nac ~ .x)) %>% 
+  map_df(tidy, .id = ".x", conf.int = TRUE)
+
+tabla_coef_lm[3:8] <- round(tabla_coef_lm[3:8], digits = 3)
+
+summary(lm(peso_nac ~ sexo, data = base_pesos_col))
+```
+
